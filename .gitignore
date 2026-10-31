@@ -16,6 +16,13 @@ build/
 # macOS
 .DS_Store
 
-# Editor
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Editors
 .vscode/
 .idea/
