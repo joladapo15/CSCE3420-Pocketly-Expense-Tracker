@@ -1,0 +1,78 @@
+.select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.select-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-field {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #1e2228;
+  border: 1px solid #343a44;
+  border-radius: 10px;
+  color: #e5e7eb;
+  font-size: 14px;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  padding: 10px 36px 10px 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.select-field:focus {
+  border-color: #a7ebc9;
+}
+
+.select-field option {
+  background: #1e2228;
+  color: #e5e7eb;
+}
+
+.select-field-error {
+  border-color: #f87171;
+}
+
+.select-field-error:focus {
+  border-color: #f87171;
+}
+
+.select-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.select-field-placeholder {
+  color: #6b7280;
+}
+
+.select-chevron {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+}
+
+.select-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.select-error {
+  color: #f87171;
+  font-size: 12px;
+}
