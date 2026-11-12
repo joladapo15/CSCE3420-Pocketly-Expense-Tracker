@@ -1,0 +1,52 @@
+.del-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 12px;
+}
+
+.del-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.del-badge-icon {
+  color: #ef4444;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.del-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e5e7eb;
+  margin: 0 0 8px;
+}
+
+.del-subtitle {
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 320px;
+}
+
+.del-modal-footer {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.del-modal-footer .btn {
+  flex: 1;
+}
+
