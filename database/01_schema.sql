@@ -1,5 +1,6 @@
 -- ============================================
 -- Pocketly - Database Schema
+-- File: 01_schema.sql
 -- ============================================
 
 -- 1. Users table
@@ -59,3 +60,10 @@ ON transactions(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_transactions_user_date
 ON transactions(user_id, transaction_date);
+
+-- 5. Database privileges
+GRANT CONNECT ON DATABASE pocketly_db TO pocketly_user;
+GRANT USAGE ON SCHEMA public TO pocketly_user;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users, transactions TO pocketly_user;
+GRANT SELECT ON TABLE categories TO pocketly_user;
