@@ -2,6 +2,8 @@ const profileRoutes = require('./routes/profile');
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
+const categoryRoutes = require('./routes/categories');
+const transactionRoutes = require('./routes/transactions');
 require('dotenv').config();
 
 const app = express();
@@ -12,6 +14,8 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Test API
 app.get('/api/health', (req, res) => {
