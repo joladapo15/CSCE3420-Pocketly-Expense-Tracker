@@ -1,0 +1,81 @@
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: #181c20;
+  border-right: 1px solid #262b33;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 12px;
+  box-sizing: border-box;
+}
+
+.sidebar-logo {
+  color: #a7ebc9;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 1px;
+  padding: 4px 12px 24px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-link {
+  color: #9ca3af;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.nav-link:hover { background: #20252b; }
+
+.nav-link-active {
+  background: #262b33;
+  color: #a7ebc9;
+}
+
+.sidebar-footer {
+  border-top: 1px solid #262b33;
+  padding-top: 14px;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 12px;
+}
+
+.sidebar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #a7ebc9;
+  color: #14171a;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-name { color: #e5e7eb; font-size: 13px; font-weight: 600; }
+.sidebar-email { color: #6b7280; font-size: 11px; }
+
+.sidebar-logout {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 10px 12px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar-logout:hover { color: #e5e7eb; }
