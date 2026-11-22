@@ -1,0 +1,24 @@
+.profile-page { max-width: 560px; }
+
+.profile-subtitle { color: #6b7280; margin-top: -8px; margin-bottom: 24px; }
+
+.profile-message {
+  background: #20252b;
+  border: 1px solid #343a44;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.profile-card {
+  background: #181c20;
+  border: 1px solid #262b33;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-actions { display: flex; gap: 12px; margin-top: 8px; }
