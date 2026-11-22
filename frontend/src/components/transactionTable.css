@@ -1,0 +1,36 @@
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tx-table th {
+  text-align: left;
+  color: #6b7280;
+  font-weight: 500;
+  padding: 10px 12px;
+  background: #20252b;
+}
+
+.tx-table td {
+  padding: 14px 12px;
+  color: #e5e7eb;
+  border-bottom: 1px solid #262b33;
+}
+
+.tx-income { color: #a7ebc9 !important; }
+.tx-expense { color: #f87171 !important; }
+
+.tx-actions { display: flex; gap: 8px; }
+
+.tx-actions button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.tx-actions button:hover { color: #e5e7eb; }
+
+.tx-empty { color: #6b7280; padding: 16px 12px; }
