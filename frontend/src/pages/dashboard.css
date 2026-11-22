@@ -1,0 +1,62 @@
+.dashboard { display: flex; flex-direction: column; gap: 20px; }
+
+.dashboard-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.dashboard-header h1 { margin: 0; }
+.dashboard-subtitle { color: #6b7280; margin: 4px 0 0; }
+
+.dashboard-filter {
+  background: #181c20;
+  color: #e5e7eb;
+  border: 1px solid #343a44;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.dashboard-error {
+  background: #3b1d1d;
+  border: 1px solid #f87171;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0;
+}
+
+.summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+.summary-card, .dashboard-card {
+  background: #181c20;
+  border: 1px solid #262b33;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.summary-card { display: flex; flex-direction: column; gap: 8px; }
+.summary-label { color: #9ca3af; font-size: 13px; }
+.summary-value { font-size: 28px; font-weight: 700; }
+.summary-value.income { color: #a7ebc9; }
+.summary-value.expense { color: #f87171; }
+
+.dashboard-card h2 { font-size: 16px; margin: 0 0 16px; }
+
+.chart-row { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+
+.donut-wrap { position: relative; }
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.donut-center span { color: #9ca3af; font-size: 12px; }
+
+.legend-list { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+.empty-text { color: #6b7280; }
+
+@media (max-width: 900px) {
+  .summary-cards, .chart-row { grid-template-columns: 1fr; }
+}
