@@ -12,7 +12,7 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
         <Route path="/transactions" element={<Placeholder title="Transactions" />} />
-        <Route path="/profile" element={<Placeholder title="Settings" />} />
+        <Route path="/profile" element={<Placeholder title="Profile" />} />
       </Route>
     </Routes>
   );
