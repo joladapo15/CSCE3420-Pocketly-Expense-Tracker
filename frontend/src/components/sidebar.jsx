@@ -21,7 +21,7 @@ return (
       <nav className="sidebar-nav">
         <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
         <NavLink to="/transactions" className={navClass}>Transactions</NavLink>
-        <NavLink to="/profile" className={navClass}>Settings</NavLink>
+        <NavLink to="/profile" className={navClass}>Profile</NavLink>
       </nav>
 
       <div className="sidebar-footer">
