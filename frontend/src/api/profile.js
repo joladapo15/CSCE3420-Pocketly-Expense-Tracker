@@ -19,3 +19,10 @@ export function changePassword(current_password, new_password) {
     body: JSON.stringify({ current_password, new_password }),
   });
 }
+
+export function updateAvatar(avatar_url) {
+  return apiFetch("/api/profile/avatar", {
+    method: "PUT",
+    body: JSON.stringify({ avatar_url }),
+  });
+}

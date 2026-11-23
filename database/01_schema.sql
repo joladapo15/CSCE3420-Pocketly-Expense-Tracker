@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     institution_name VARCHAR(150),
     phone_number VARCHAR(20),
+    avatar_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

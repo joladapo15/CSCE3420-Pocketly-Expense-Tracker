@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT user_id, full_name, email, institution_name, phone_number, created_at
+      `SELECT user_id, full_name, email, institution_name, phone_number, avatar_url, created_at
        FROM users WHERE user_id = $1`,
       [req.user.user_id]
     );
@@ -126,4 +126,62 @@ router.put('/password', authMiddleware, async (req, res) => {
   }
 });
 
+// Update current user's avatar
+router.put('/avatar', authMiddleware, async (req, res) => {
+  try {
+    const { avatar_url } = req.body;
+
+    if (
+      typeof avatar_url !== 'string' ||
+      !/^data:image\/(jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/.test(avatar_url)
+    ) {
+      return res.status(400).json({ error: 'Only JPG and PNG images are allowed.' });
+    }
+
+    const base64Data = avatar_url.split(',')[1];
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+
+    if (imageBuffer.length > 2 * 1024 * 1024 || imageBuffer.length === 0) {
+      return res.status(400).json({ error: 'Image must be smaller than 2 MB.' });
+    }
+
+    const isPng = imageBuffer.subarray(0, 8).equals(
+      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+    );
+
+    const isJpeg =
+      imageBuffer.length >= 3 &&
+      imageBuffer[0] === 0xff &&
+      imageBuffer[1] === 0xd8 &&
+      imageBuffer[2] === 0xff;
+
+    if (
+      (avatar_url.startsWith('data:image/png;') && !isPng) ||
+      (avatar_url.startsWith('data:image/jpeg;') && !isJpeg)
+    ) {
+      return res.status(400).json({ error: 'Invalid image data.' });
+    }
+
+    const result = await pool.query(
+      `UPDATE users
+       SET avatar_url = $1
+       WHERE user_id = $2
+       RETURNING avatar_url`,
+      [avatar_url, req.user.user_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.status(200).json({
+      message: 'Avatar updated successfully.',
+      avatar_url: result.rows[0].avatar_url
+    });
+
+  } catch (err) {
+    console.error('Update avatar error:', err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+});
 module.exports = router;

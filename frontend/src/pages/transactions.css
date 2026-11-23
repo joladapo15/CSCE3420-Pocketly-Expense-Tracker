@@ -351,3 +351,70 @@
   cursor: not-allowed;
 }
 
+.cat-healthcare {
+  background: rgba(45, 212, 191, 0.15);
+  color: #5eead4;
+}
+
+.cat-salary {
+  background: rgba(110, 231, 183, 0.15);
+  color: #6ee7b7;
+}
+
+.cat-allowance {
+  background: rgba(196, 181, 253, 0.15);
+  color: #c4b5fd;
+}
+
+.cat-freelance {
+  background: rgba(125, 211, 252, 0.15);
+  color: #7dd3fc;
+}
+
+.cat-other-income {
+  background: rgba(249, 168, 212, 0.15);
+  color: #f9a8d4;
+}
+
+.cat-default {
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+}
+
+/* Custom Date Range */
+.tx-custom-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tx-custom-range input[type="date"] {
+  background: #1e2228;
+  border: 1px solid #343a44;
+  border-radius: 10px;
+  color: #e5e7eb;
+  font-size: 13px;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  padding: 8px 12px;
+  width: 150px;
+  color-scheme: dark;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.tx-custom-range input[type="date"]:focus {
+  border-color: #a7ebc9;
+}
+
+.tx-custom-range input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.tx-custom-range span {
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 500;
+}

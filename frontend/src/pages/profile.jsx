@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../api/client";
 import Input from "../components/input";
 import PasswordInput from "../components/passwordInput";
 import Modal from "../components/modal";
 import Button from "../components/button";
-import { getProfile, updateProfile, changePassword } from "../api/profile";
+import { getProfile, updateProfile, changePassword, updateAvatar } from "../api/profile";
 import "./profile.css";
 
 const emptyPasswordForm = { current: "", next: "", confirm: "" };
@@ -17,8 +18,13 @@ export default function Profile() {
   });
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [avatar, setAvatar] = useState(null);
+  const [avatarError, setAvatarError] = useState("");
+  const [createdAt, setCreatedAt] = useState(null);
+  const [totalTransactions, setTotalTransactions] = useState(null);
 
   const [pwOpen, setPwOpen] = useState(false);
   const [pwForm, setPwForm] = useState(emptyPasswordForm);
@@ -26,17 +32,35 @@ export default function Profile() {
   const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
-    getProfile()
-      .then((user) =>
+    async function loadProfileData() {
+      try {
+        const user = await getProfile();
+
         setForm({
           full_name: user.full_name || "",
           email: user.email || "",
           institution_name: user.institution_name || "",
           phone_number: user.phone_number || "",
-        })
-      )
-      .catch((err) => setMessage(err.message))
-      .finally(() => setLoading(false));
+        });
+
+        setCreatedAt(user.created_at);
+        setAvatar(user.avatar_url || null);
+      } catch (err) {
+        setMessage(err.message);
+        setMessageType("error");
+      } finally {
+        setLoading(false);
+      }
+
+      try {
+        const data = await apiFetch("/api/transactions");
+        setTotalTransactions(data.transactions.length);
+      } catch (err) {
+        console.error("Failed to load transaction count:", err);
+      }
+    }
+
+    loadProfileData();
   }, []);
 
   function handleChange(e) {
@@ -67,8 +91,10 @@ export default function Profile() {
         phone_number: form.phone_number,
       });
       setMessage("Profile updated successfully.");
+      setMessageType("success");
     } catch (err) {
       setMessage(err.message);
+      setMessageType("error");
     } finally {
       setSaving(false);
     }
@@ -100,6 +126,7 @@ export default function Profile() {
       await changePassword(pwForm.current, pwForm.next);
       closePasswordModal();
       setMessage("Password changed successfully.");
+      setMessageType("success");
     } catch (err) {
       setPwErrors({ current: err.message });
     } finally {
@@ -113,6 +140,44 @@ export default function Profile() {
     setPwErrors({});
   }
 
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setAvatarError("Only JPG and PNG files are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError("Image must be smaller than 2 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setAvatarError("");
+
+    try {
+      const avatarData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Failed to read image."));
+        reader.readAsDataURL(file);
+      });
+
+      const result = await updateAvatar(avatarData);
+
+      setAvatar(result.avatar_url);
+      setMessage("Profile photo updated successfully.");
+      setMessageType("success");
+    } catch (err) {
+      setAvatarError(err.message || "Failed to update profile photo.");
+    } finally {
+      e.target.value = "";
+    }
+  }
+
   if (loading) return <p>Loading profile...</p>;
 
   return (
@@ -120,50 +185,119 @@ export default function Profile() {
       <h1>Profile</h1>
       <p className="profile-subtitle">Manage your account information</p>
 
-      {message && <p className="profile-message">{message}</p>}
+      {message && (
+        <p className={`profile-message ${messageType}`}>
+          {message}
+        </p>
+      )}
 
-      <form className="profile-card" onSubmit={handleSave}>
-        <Input
-          label="Full Name"
-          name="full_name"
-          value={form.full_name}
-          onChange={handleChange}
-          error={errors.full_name}
-        />
-        <Input
-          label="Email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          disabled
-          helperText="Email can't be changed."
-        />
-        <Input
-          label="Institution"
-          name="institution_name"
-          value={form.institution_name}
-          onChange={handleChange}
-          placeholder="University of North Texas"
-          error={errors.institution_name}
-        />
-        <Input
-          label="Phone Number"
-          name="phone_number"
-          value={form.phone_number}
-          onChange={handleChange}
-          error={errors.phone_number}
-        />
+      <div className="profile-layout">
+        {/* Left: Avatar Card */}
+        <div className="profile-avatar-card">
+          <div className="profile-avatar">
+            {avatar ? (
+              <img src={avatar} alt="Profile avatar" />
+            ) : (
+              <span>
+                {form.full_name.trim()
+                  ? form.full_name.trim().charAt(0).toUpperCase()
+                  : "?"}
+              </span>
+            )}
+          </div>
 
-        <div className="profile-actions">
-          <Button type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
-          <Button variant="secondary" onClick={() => setPwOpen(true)}>
-            Change Password
-          </Button>
+          <h2>{form.full_name}</h2>
+          <p className="profile-avatar-email">{form.email}</p>
+
+          <div className="profile-stats">
+            <div className="profile-stat">
+              <span className="profile-stat-icon">📅</span>
+              <div>
+                <span className="profile-stat-label">Active since</span>
+                <strong>
+                  {createdAt
+                    ? new Date(createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </strong>
+              </div>
+            </div>
+
+            <div className="profile-stat">
+              <span className="profile-stat-icon">📈</span>
+              <div>
+                <span className="profile-stat-label">Total Transactions</span>
+                <strong>{totalTransactions ?? "—"}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="profile-photo-upload">
+            <label htmlFor="profile-photo" className="profile-photo-btn">
+              Change photo
+            </label>
+            <input
+              id="profile-photo"
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={handleAvatarChange}
+              hidden
+            />
+            <span>JPG or PNG. Max 2 MB.</span>
+          </div>
+
+          {avatarError && (
+            <p className="profile-avatar-error">{avatarError}</p>
+          )}
         </div>
-      </form>
 
+        {/* Right: Existing Profile Form */}
+        <form className="profile-card" onSubmit={handleSave}>
+          <Input
+            label="Full Name"
+            name="full_name"
+            value={form.full_name}
+            onChange={handleChange}
+            error={errors.full_name}
+          />
+          <Input
+            label="Email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            disabled
+            helperText="Email can't be changed."
+          />
+          <Input
+            label="Institution"
+            name="institution_name"
+            value={form.institution_name}
+            onChange={handleChange}
+            placeholder="University of North Texas"
+            error={errors.institution_name}
+          />
+          <Input
+            label="Phone Number"
+            name="phone_number"
+            value={form.phone_number}
+            onChange={handleChange}
+            error={errors.phone_number}
+          />
+
+          <div className="profile-actions">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button variant="secondary" onClick={() => setPwOpen(true)}>
+              Change Password
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {/* Change Password Modal */}
       <Modal
         isOpen={pwOpen}
         onClose={closePasswordModal}
@@ -173,7 +307,11 @@ export default function Profile() {
             <Button variant="secondary" onClick={closePasswordModal}>
               Cancel
             </Button>
-            <Button variant="accent" onClick={handlePasswordSubmit} disabled={pwSaving}>
+            <Button
+              variant="accent"
+              onClick={handlePasswordSubmit}
+              disabled={pwSaving}
+            >
               {pwSaving ? "Saving..." : "Update Password"}
             </Button>
           </>

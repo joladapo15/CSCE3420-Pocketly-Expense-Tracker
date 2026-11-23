@@ -5,42 +5,34 @@ import TransactionModal from "../components/transactionModal";
 import DeleteModal from "../components/deleteModal";
 import "./transactions.css";
 
-const INITIAL_TRANSACTIONS = [
-  { id: "1", date: "2026-10-16", description: "Grocery shopping", category: "Food", type: "Expense", amount: -45.2 },
-  { id: "2", date: "2026-10-15", description: "Part-time job", category: "Income", type: "Income", amount: 650.0 },
-  { id: "3", date: "2026-10-13", description: "Bus pass", category: "Transportation", type: "Expense", amount: -18.5 },
-  { id: "4", date: "2026-10-12", description: "Textbook", category: "Education", type: "Expense", amount: -72.0 },
-  { id: "5", date: "2026-10-10", description: "Rent", category: "Housing", type: "Expense", amount: -500.0 },
-  { id: "6", date: "2026-10-08", description: "Movie", category: "Entertainment", type: "Expense", amount: -16.0 },
-  { id: "7", date: "2026-10-05", description: "Restaurant", category: "Food", type: "Expense", amount: -32.8 },
-  { id: "8", date: "2026-10-01", description: "Allowance", category: "Income", type: "Income", amount: 200.0 },
-  { id: "9", date: "2026-09-28", description: "Internet bill", category: "Bills", type: "Expense", amount: -60.0 },
-  { id: "10", date: "2026-09-25", description: "Clothing", category: "Shopping", type: "Expense", amount: -85.0 },
-  { id: "11", date: "2026-09-20", description: "Freelance project", category: "Income", type: "Income", amount: 450.0 },
-  { id: "12", date: "2026-09-18", description: "Concert ticket", category: "Entertainment", type: "Expense", amount: -95.0 },
-  { id: "13", date: "2026-09-15", description: "Coffee & bakery", category: "Food", type: "Expense", amount: -12.4 },
-  { id: "14", date: "2026-09-12", description: "Electricity bill", category: "Bills", type: "Expense", amount: -110.0 },
-  { id: "15", date: "2026-09-10", description: "Sneakers", category: "Shopping", type: "Expense", amount: -120.0 },
-  { id: "16", date: "2026-09-05", description: "Campus parking", category: "Transportation", type: "Expense", amount: -45.0 },
-  { id: "17", date: "2026-09-01", description: "Monthly stipend", category: "Income", type: "Income", amount: 500.0 },
-  { id: "18", date: "2026-08-28", description: "Course material", category: "Education", type: "Expense", amount: -64.0 },
-  { id: "19", date: "2026-08-24", description: "Dinner with friends", category: "Food", type: "Expense", amount: -48.5 },
-  { id: "20", date: "2026-08-20", description: "Phone bill", category: "Bills", type: "Expense", amount: -55.0 },
-  { id: "21", date: "2026-08-15", description: "Tutoring gig", category: "Income", type: "Income", amount: 180.0 },
-  { id: "22", date: "2026-08-10", description: "Desk lamp", category: "Housing", type: "Expense", amount: -35.0 },
-  { id: "23", date: "2026-08-05", description: "Streaming service", category: "Entertainment", type: "Expense", amount: -14.99 },
-  { id: "24", date: "2026-08-01", description: "Gas station", category: "Transportation", type: "Expense", amount: -42.0 },
-];
-
 const CATEGORY_ICONS = {
-  Food: "🍴",
-  Income: "💰",
+  "Food & Drinks": "🍴",
+  Shopping: "🛒",
   Transportation: "🚌",
   Education: "📚",
   Housing: "🏠",
+  "Bills & Utilities": "🧾",
   Entertainment: "🎬",
-  Bills: "⚡",
-  Shopping: "🛒",
+  Healthcare: "🏥",
+  Salary: "💵",
+  Allowance: "🎁",
+  Freelance: "💻",
+  "Other Income": "💰",
+};
+
+const CATEGORY_CLASSES = {
+  "Food & Drinks": "cat-food",
+  Shopping: "cat-shopping",
+  Transportation: "cat-transportation",
+  Education: "cat-education",
+  Housing: "cat-housing",
+  "Bills & Utilities": "cat-bills",
+  Entertainment: "cat-entertainment",
+  Healthcare: "cat-healthcare",
+  Salary: "cat-salary",
+  Allowance: "cat-allowance",
+  Freelance: "cat-freelance",
+  "Other Income": "cat-other-income",
 };
 
 const formatDisplayDate = (dateStr) => {
@@ -63,6 +55,8 @@ export default function Transactions() {
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [dateFilter, setDateFilter] = useState("All Time");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
@@ -105,6 +99,8 @@ export default function Transactions() {
     setCategoryFilter("All Categories");
     setDateFilter("All Time");
     setCurrentPage(1);
+    setStartDate("");
+    setEndDate("");
   };
 
   const filteredTransactions = useMemo(() => {
@@ -125,23 +121,58 @@ export default function Transactions() {
       }
 
       if (dateFilter !== "All Time") {
-        const now = new Date();
-        const targetDate = new Date(
-          now.getFullYear(),
-          now.getMonth() - (dateFilter === "Last Month" ? 1 : 0),
-          1
-        );
+        const today = new Date();
+        const todayString = [
+          today.getFullYear(),
+          String(today.getMonth() + 1).padStart(2, "0"),
+          String(today.getDate()).padStart(2, "0"),
+        ].join("-");
 
-        const targetMonth = `${targetDate.getFullYear()}-${String(
-          targetDate.getMonth() + 1
-        ).padStart(2, "0")}`;
+        const transactionDate = tx.date.slice(0, 10);
 
-        if (!tx.date.startsWith(targetMonth)) return false;
+        if (dateFilter === "Today") {
+          if (transactionDate !== todayString) return false;
+        }
+
+        if (dateFilter === "This Week") {
+          const monday = new Date(today);
+          const daysSinceMonday = (today.getDay() + 6) % 7;
+          monday.setDate(today.getDate() - daysSinceMonday);
+
+          const weekStart = [
+            monday.getFullYear(),
+            String(monday.getMonth() + 1).padStart(2, "0"),
+            String(monday.getDate()).padStart(2, "0"),
+          ].join("-");
+
+          if (transactionDate < weekStart || transactionDate > todayString) {
+            return false;
+          }
+        }
+
+        if (dateFilter === "This Month" || dateFilter === "Last Month") {
+          const target = new Date(
+            today.getFullYear(),
+            today.getMonth() - (dateFilter === "Last Month" ? 1 : 0),
+            1
+          );
+
+          const month = `${target.getFullYear()}-${String(
+            target.getMonth() + 1
+          ).padStart(2, "0")}`;
+
+          if (!transactionDate.startsWith(month)) return false;
+        }
+
+        if (dateFilter === "Custom Range") {
+          if (startDate && transactionDate < startDate) return false;
+          if (endDate && transactionDate > endDate) return false;
+        }
       }
 
       return true;
     });
-  }, [transactions, search, typeFilter, categoryFilter, dateFilter]);
+  }, [transactions, search, typeFilter, categoryFilter, dateFilter, startDate, endDate]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
 
@@ -307,9 +338,36 @@ export default function Transactions() {
             }}
           >
             <option value="All Time">All Time</option>
+            <option value="Today">Today</option>
+            <option value="This Week">This Week</option>
             <option value="This Month">This Month</option>
             <option value="Last Month">Last Month</option>
+            <option value="Custom Range">Custom Range</option>
           </select>
+
+          {dateFilter === "Custom Range" && (
+            <div className="tx-custom-range">
+              <input
+                type="date"
+                value={startDate}
+                max={endDate || undefined}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+              <span>to</span>
+              <input
+                type="date"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          )}
 
           <button type="button" className="tx-reset-btn" onClick={handleResetFilters}>
             <span>🔄</span> Reset
@@ -337,7 +395,7 @@ export default function Transactions() {
                 </tr>
               ) : (
                 paginatedTransactions.map((tx) => {
-                  const catClass = `cat-${tx.category.toLowerCase()}`;
+                  const catClass = CATEGORY_CLASSES[tx.category] || "cat-default";
                   const isIncome = tx.type === "Income";
                   const formattedAmt = isIncome
                     ? `+$${Math.abs(tx.amount).toFixed(2)}`
