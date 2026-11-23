@@ -5,16 +5,6 @@ import Select from "./select";
 import Button from "./button";
 import "./transactionModal.css";
 
-const CATEGORIES = [
-  "Food",
-  "Shopping",
-  "Transportation",
-  "Education",
-  "Housing",
-  "Entertainment",
-  "Bills",
-];
-
 const getTodayString = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -28,78 +18,100 @@ export default function TransactionModal({
   onClose,
   onSave,
   initialData = null,
+  categories = [],
 }) {
   const [type, setType] = useState("Expense");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("Food");
+  const [categoryId, setCategoryId] = useState("");
   const [date, setDate] = useState(getTodayString());
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (initialData) {
-      setType(initialData.type || "Expense");
-      setAmount(initialData.amount ? String(Math.abs(Number(initialData.amount))) : "");
-      setCategory(initialData.category || "Food");
-      setDate(initialData.date ? initialData.date.slice(0, 10) : getTodayString());
+      setType(initialData.type === "income" ? "Income" : "Expense");
+      setAmount(
+        initialData.amount
+          ? String(Math.abs(Number(initialData.amount)))
+          : ""
+      );
+      setCategoryId(
+        initialData.category_id != null
+          ? String(initialData.category_id)
+          : ""
+      );
+      setDate(
+        initialData.transaction_date
+          ? initialData.transaction_date.slice(0, 10)
+          : getTodayString()
+      );
       setDescription(initialData.description || "");
     } else {
       setType("Expense");
       setAmount("");
-      setCategory("Food");
+      setCategoryId("");
       setDate(getTodayString());
       setDescription("");
     }
+
     setErrors({});
   }, [initialData, isOpen]);
 
   const handleTypeChange = (newType) => {
     setType(newType);
-    if (newType === "Income") {
-      setCategory("Income");
-    } else if (category === "Income") {
-      setCategory("Food");
-    }
+    setCategoryId("");
+    setErrors((prev) => ({ ...prev, category: "" }));
   };
+
+  const filteredCategories = categories.filter(
+    (cat) => cat.type === type.toLowerCase()
+  );
 
   const validate = () => {
     const errs = {};
-    const parsedAmount = parseFloat(amount);
-    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      errs.amount = "Please enter a valid amount greater than 0.";
+    const parsedAmount = Number(amount);
+
+    if (!amount || !Number.isFinite(parsedAmount) ||
+        parsedAmount <= 0 || parsedAmount > 9999999999.99 ||
+        !Number.isInteger(Math.round(parsedAmount * 100)) ||
+        Math.abs(parsedAmount * 100 - Math.round(parsedAmount * 100)) > 0.000001) {
+      errs.amount = "Please enter a valid amount with up to 2 decimal places.";
     }
-    if (type === "Expense" && !category) {
-      errs.category = "Please select a category.";
+
+    if (!categoryId) {
+      errs.categoryId = "Please select a category.";
     }
+
     if (!date) {
       errs.date = "Date is required.";
     }
-    if (!description.trim()) {
-      errs.description = "Description is required.";
-    }
+
     return errs;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const errs = validate();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
 
-    const numericAmount = parseFloat(amount);
-    const finalAmount = type === "Income" ? Math.abs(numericAmount) : -Math.abs(numericAmount);
-
-    onSave({
-      id: initialData?.id,
-      type,
-      amount: finalAmount,
-      category: type === "Income" ? "Income" : category,
-      date,
+    const transactionData = {
+      category_id: Number(categoryId),
+      type: type.toLowerCase(),
+      amount: Number(amount),
+      transaction_date: date,
       description: description.trim(),
-    });
-    onClose();
+    };
+
+    try {
+      await onSave(transactionData, initialData?.transaction_id);
+      onClose();
+    } catch (err) {
+      setErrors({ form: err.message || "Failed to save transaction." });
+    }
   };
 
   const isEditing = Boolean(initialData);
@@ -161,16 +173,20 @@ export default function TransactionModal({
 
         <Select
           label="Category"
-          name="category"
-          value={type === "Income" ? "" : category}
+          name="categoryId"
+          value={categoryId}
           onChange={(e) => {
-            setCategory(e.target.value);
-            if (errors.category) setErrors({ ...errors, category: "" });
+            setCategoryId(e.target.value);
+            if (errors.categoryId) {
+              setErrors({ ...errors, categoryId: "" });
+            }
           }}
-          options={CATEGORIES}
-          placeholder={type === "Income" ? "Not required for income" : "Select category"}
-          disabled={type === "Income"}
-          error={errors.category}
+          options={filteredCategories.map((cat) => ({
+            value: String(cat.category_id),
+            label: cat.name,
+          }))}
+          placeholder="Select category"
+          error={errors.categoryId}
         />
 
         <Input

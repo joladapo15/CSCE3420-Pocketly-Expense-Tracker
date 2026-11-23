@@ -30,7 +30,6 @@ export default function Signup() {
     if (!form.email.trim()) errs.email = "Email is required.";
     else if (!/\S+@\S+\.\S+/.test(form.email))
       errs.email = "Enter a valid email address.";
-    if (!form.phone.trim()) errs.phone = "Phone number is required.";
     if (!form.password) errs.password = "Password is required.";
     else if (form.password.length < 8)
       errs.password = "Password must be at least 8 characters.";
@@ -46,34 +45,38 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
+
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
     }
 
     setLoading(true);
+    setErrors({});
+
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch("http://localhost:5001/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          school: form.school,
+          full_name: form.name.trim(),
+          email: form.email.trim(),
           password: form.password,
+          institution_name: form.school.trim(),
+          phone_number: form.phone.trim(),
         }),
       });
+
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setErrors({
-          form: data.message || "Something went wrong. Try again.",
-        });
-      } else {
-        navigate("/dashboard");
+        setErrors({ form: data.error || "Registration failed." });
+        return;
       }
-    } catch {
-      navigate("/dashboard");
+
+      navigate("/login");
+    } catch (err) {
+      setErrors({ form: "Cannot connect to the server. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -109,18 +112,17 @@ export default function Signup() {
         />
 
         <Input
-          label="Phone number"
+          label="Phone number (Optional)"
           name="phone"
           value={form.phone}
           onChange={handleChange}
           placeholder="(555) 000-0000"
           prefix="+1"
           error={errors.phone}
-          required
         />
 
         <Input
-          label="Your school (optional)"
+          label="Your school (Optional)"
           name="school"
           value={form.school}
           onChange={handleChange}

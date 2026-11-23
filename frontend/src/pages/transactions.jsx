@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { apiFetch } from "../api/client";
 import Button from "../components/button";
 import TransactionModal from "../components/transactionModal";
 import DeleteModal from "../components/deleteModal";
@@ -56,7 +57,8 @@ const formatDisplayDate = (dateStr) => {
 };
 
 export default function Transactions() {
-  const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
@@ -70,17 +72,31 @@ export default function Transactions() {
   const [transactionToDelete, setTransactionToDelete] = useState(null);
 
   useEffect(() => {
-    fetch("/api/transactions")
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
+    apiFetch("/api/categories")
+      .then((data) => setCategories(data.categories))
+      .catch((err) => console.error("Failed to load categories:", err));
+  }, []);
+
+  useEffect(() => {
+    apiFetch("/api/transactions")
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setTransactions(data);
-        }
+        const formattedTransactions = data.transactions.map((txn) => ({
+          id: String(txn.transaction_id),
+          transaction_id: txn.transaction_id,
+          category_id: txn.category_id,
+          date: txn.transaction_date,
+          transaction_date: txn.transaction_date,
+          description: txn.description || "",
+          category: txn.category_name,
+          type: txn.type === "income" ? "Income" : "Expense",
+          amount: txn.type === "income"
+            ? Number(txn.amount)
+            : -Number(txn.amount),
+        }));
+
+        setTransactions(formattedTransactions);
       })
-      .catch(() => {});
+      .catch((err) => console.error("Failed to load transactions:", err));
   }, []);
 
   const handleResetFilters = () => {
@@ -108,10 +124,19 @@ export default function Transactions() {
         if (tx.category.toLowerCase() !== categoryFilter.toLowerCase()) return false;
       }
 
-      if (dateFilter === "This Month") {
-        if (!tx.date.startsWith("2026-10")) return false;
-      } else if (dateFilter === "Last Month") {
-        if (!tx.date.startsWith("2026-09")) return false;
+      if (dateFilter !== "All Time") {
+        const now = new Date();
+        const targetDate = new Date(
+          now.getFullYear(),
+          now.getMonth() - (dateFilter === "Last Month" ? 1 : 0),
+          1
+        );
+
+        const targetMonth = `${targetDate.getFullYear()}-${String(
+          targetDate.getMonth() + 1
+        ).padStart(2, "0")}`;
+
+        if (!tx.date.startsWith(targetMonth)) return false;
       }
 
       return true;
@@ -146,41 +171,65 @@ export default function Transactions() {
     setDeleteModalOpen(true);
   };
 
-  const handleSaveTransaction = async (formData) => {
-    if (formData.id) {
-      try {
-        await fetch(`/api/transactions/${formData.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-      } catch {}
-      setTransactions((prev) =>
-        prev.map((item) => (item.id === formData.id ? { ...item, ...formData } : item))
-      );
-    } else {
-      const newTx = { ...formData, id: String(Date.now()) };
-      try {
-        await fetch("/api/transactions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newTx),
-        });
-      } catch {}
-      setTransactions((prev) => [newTx, ...prev]);
-    }
+  const handleSaveTransaction = async (transactionData, transactionId) => {
+    const isEditing = Boolean(transactionId);
+
+    const path = isEditing
+      ? `/api/transactions/${transactionId}`
+      : "/api/transactions";
+
+    const data = await apiFetch(path, {
+      method: isEditing ? "PUT" : "POST",
+      body: JSON.stringify(transactionData),
+    });
+
+    const savedTransaction = data.transaction;
+
+    const formattedTransaction = {
+      id: String(savedTransaction.transaction_id),
+      transaction_id: savedTransaction.transaction_id,
+      category_id: savedTransaction.category_id,
+      date: savedTransaction.transaction_date,
+      transaction_date: savedTransaction.transaction_date,
+      description: savedTransaction.description || "",
+      category: categories.find(
+        (cat) => cat.category_id === savedTransaction.category_id
+      )?.name || "",
+      type: savedTransaction.type === "income" ? "Income" : "Expense",
+      amount: savedTransaction.type === "income"
+        ? Number(savedTransaction.amount)
+        : -Number(savedTransaction.amount),
+    };
+
+    setTransactions((prev) =>
+      isEditing
+        ? prev.map((txn) =>
+            txn.transaction_id === transactionId ? formattedTransaction : txn
+          )
+        : [formattedTransaction, ...prev]
+    );
   };
 
   const handleConfirmDelete = async () => {
     if (!transactionToDelete) return;
+
     try {
-      await fetch(`/api/transactions/${transactionToDelete.id}`, {
+      await apiFetch(`/api/transactions/${transactionToDelete.transaction_id}`, {
         method: "DELETE",
       });
-    } catch {}
-    setTransactions((prev) => prev.filter((item) => item.id !== transactionToDelete.id));
-    setDeleteModalOpen(false);
-    setTransactionToDelete(null);
+
+      setTransactions((prev) =>
+        prev.filter(
+          (txn) => txn.transaction_id !== transactionToDelete.transaction_id
+        )
+      );
+
+      setDeleteModalOpen(false);
+      setTransactionToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete transaction:", err);
+      alert(err.message || "Failed to delete transaction.");
+    }
   };
 
   const startIndex = filteredTransactions.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -242,14 +291,11 @@ export default function Transactions() {
             }}
           >
             <option value="All Categories">All Categories</option>
-            <option value="Food">Food</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Transportation">Transportation</option>
-            <option value="Education">Education</option>
-            <option value="Housing">Housing</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Bills">Bills</option>
-            <option value="Income">Income</option>
+            {categories.map((cat) => (
+              <option key={cat.category_id} value={cat.name}>
+                {cat.name}
+              </option>
+            ))}
           </select>
 
           <select
@@ -394,6 +440,7 @@ export default function Transactions() {
         onClose={() => setModalOpen(false)}
         onSave={handleSaveTransaction}
         initialData={editingTransaction}
+        categories={categories}
       />
 
       <DeleteModal

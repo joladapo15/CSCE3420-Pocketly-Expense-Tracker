@@ -30,30 +30,36 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
+
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
     }
 
     setLoading(true);
+    setErrors({});
+
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("http://localhost:5001/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: form.email,
+          email: form.email.trim(),
           password: form.password,
-          remember,
         }),
       });
+
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setErrors({ form: data.message || "Invalid email or password." });
-      } else {
-        navigate("/dashboard");
+        setErrors({ form: data.error || "Invalid email or password." });
+        return;
       }
-    } catch {
+
+      localStorage.setItem("token", data.token);
       navigate("/dashboard");
+    } catch (err) {
+      setErrors({ form: "Cannot connect to the server. Please try again." });
     } finally {
       setLoading(false);
     }
